@@ -232,6 +232,6 @@ const apiRequestSchema = forma.object({
 
 MIT © FormaJS
 
-## Integração com FormaJS
+## Integration with FormaJS
 
-O FormaSchema é o consumidor principal dos validadores standalone do FormaJS, orquestrando a execução e coleta de erros usando as mensagens i18n do Forma.
+@formajs/mold is the primary consumer of FormaJS standalone validators, orchestrating execution and error collection using Forma’s i18n messages.

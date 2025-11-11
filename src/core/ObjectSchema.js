@@ -77,11 +77,15 @@ export class ObjectSchema extends BaseSchema {
             }
         }
 
-        // Remove campos sem erro (null ou undefined)
+        // Remove campos sem erro (null ou undefined).
+        // Observação: não remover arrays que possuam propriedade `items` com erros de índices.
         Object.keys(errors).forEach((key) => {
+            const node = errors[key];
+            const isArray = Array.isArray(node);
+            const hasItems = isArray && Object.prototype.hasOwnProperty.call(node, 'items');
             if (
-                errors[key] == null ||
-                (Array.isArray(errors[key]) && errors[key].every((e) => e == null))
+                node == null ||
+                (isArray && !hasItems && node.every((e) => e == null))
             ) {
                 delete errors[key];
             }

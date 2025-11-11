@@ -1,0 +1,71 @@
+{
+    "name": "@formajs/mold",
+    "version": "1.0.0",
+    "description": "Schema validation powered by FormaJS. Mold your data's shape via fluent API—orchestrate purely, reimplement nothing.",
+    "type": "module",
+    "main": "dist/index.cjs",
+    "module": "dist/index.mjs",
+    "exports": {
+        ".": {
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE.md"
+    ],
+    "sideEffects": false,
+    "keywords": [
+        "schema",
+        "validation",
+        "formajs",
+        "zod",
+        "yup",
+        "data-validation",
+        "type-safe",
+        "fluent-api"
+    ],
+    "author": "FormaJS",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/FormaJS/mold"
+    },
+    "bugs": {
+        "url": "https://github.com/FormaJS/mold/issues"
+    },
+    "homepage": "https://github.com/FormaJS/mold#readme",
+    "scripts": {
+        "build": "rollup -c",
+        "test": "vitest run",
+        "test:watch": "vitest --watch",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "check": "npm run format && npm run lint"
+    },
+    "peerDependencies": {
+        "@formajs/formajs": "^1.1.1"
+    },
+    "dependencies": {
+        "@formajs/formajs": "^1.1.1"
+    },
+    "devDependencies": {
+        "@formajs/formajs": "^1.1.1",
+        "@eslint/js": "^9.38.0",
+        "@rollup/plugin-commonjs": "^29.0.0",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@vitest/coverage-istanbul": "^4.0.5",
+        "@vitest/coverage-v8": "^4.0.3",
+        "eslint": "^9.38.0",
+        "globals": "^16.5.0",
+        "prettier": "^3.6.2",
+        "rollup": "^4.52.5",
+        "terser": "^5.44.0",
+        "vitest": "^4.0.3"
+    }
+}

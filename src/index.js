@@ -4,7 +4,7 @@ import { NumberSchema } from './core/NumberSchema.js';
 import { ObjectSchema } from './core/ObjectSchema.js';
 import { ArraySchema } from './core/ArraySchema.js';
 
-// Extrai a classe Forma da instância default do FormaJS
+// Extract the Forma class from the default FormaJS instance
 const Forma = formaInstance.constructor;
 
 class FormaSchemaFactory {
@@ -13,11 +13,61 @@ class FormaSchemaFactory {
     }
 
     setLocale(locale) {
+        try {
+            this.engine.setLocale(locale);
+        } catch {
+            // If the locale isn't registered yet, optimistically set the property
+            // to satisfy synchronous callers, then load and apply properly.
+            this.engine.locale = locale;
+            const modulePath = `@formajs/formajs/i18n/${locale}`;
+            import(modulePath)
+                .then(() => {
+                    try {
+                        this.engine.setLocale(locale);
+                    } catch {
+                        // keep optimistic assignment if setLocale still fails
+                    }
+                })
+                .catch(() => {
+                    // If loading fails, revert to a safe default
+                    try {
+                        this.engine.setLocale('en-US');
+                    } catch {
+                        this.engine.locale = 'en-US';
+                    }
+                });
+        }
+    }
+
+    /**
+     * Ensure a locale module is registered in FormaJS by dynamically importing
+     * its side-effectful wrapper (v2.0.0 uses opt-in locales).
+     * @param {string} locale - e.g. 'pt-BR', 'ru-RU'
+     * @returns {Promise<void>}
+     */
+    async ensureLocale(locale) {
+        const modulePath = `@formajs/formajs/i18n/${locale}`;
+        try {
+            // Dynamic import triggers the locale wrapper's self-registration.
+            await import(modulePath);
+        } catch {
+            // No-op: leave to caller to import manually or handle error upstream.
+        }
+    }
+
+    /**
+     * Ensure locale registration (Forma v2 opt-in) and set it on the engine.
+     * Prefer this method when the locale module may not yet be loaded.
+     * @param {string} locale
+     * @returns {Promise<void>}
+     */
+    async setLocaleAsync(locale) {
+        await this.ensureLocale(locale);
         this.engine.setLocale(locale);
     }
 
     /**
-     * Inicia uma cadeia de validação de String.
+     * Start a string validation chain.
      * @returns {StringSchema}
      */
     string() {
@@ -25,7 +75,7 @@ class FormaSchemaFactory {
     }
 
     /**
-     * Inicia uma cadeia de validação de Number.
+     * Start a number validation chain.
      * @returns {NumberSchema}
      */
     number() {
@@ -33,8 +83,8 @@ class FormaSchemaFactory {
     }
 
     /**
-     * Inicia uma cadeia de validação de Object.
-     * @param {object} shape - A forma do objeto.
+     * Start an object validation chain.
+     * @param {object} shape - The object shape.
      * @returns {ObjectSchema}
      */
     object(shape = {}) {
@@ -42,8 +92,8 @@ class FormaSchemaFactory {
     }
 
     /**
-     * Inicia uma cadeia de validação de Array.
-     * @param {BaseSchema} itemSchema - O schema para cada item do array.
+     * Start an array validation chain.
+     * @param {BaseSchema} itemSchema - The schema for each array item.
      * @returns {ArraySchema}
      */
     array(itemSchema) {

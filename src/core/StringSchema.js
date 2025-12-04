@@ -124,6 +124,23 @@ export class StringSchema extends BaseSchema {
         });
     }
     validateDate(options = {}) {
+        // If no options provided, normalize input to Date via engine.toDate first,
+        // allowing strict ISO-8601 strings to be accepted even without locale.
+        if (!options || Object.keys(options).length === 0) {
+            // Inline ISO-8601 date validator for string inputs (YYYY-MM-DD)
+            const isoValidator = async (value) => {
+                if (typeof value !== 'string') return { valid: false, error: 'validateDate' };
+                const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (!m) return { valid: false, error: 'validateDate' };
+                const y = Number(m[1]);
+                const mo = Number(m[2]);
+                const d = Number(m[3]);
+                const date = new Date(Date.UTC(y, mo - 1, d));
+                const valid = date.getUTCFullYear() === y && (date.getUTCMonth() + 1) === mo && date.getUTCDate() === d;
+                return { valid };
+            };
+            return this._addToChain({ type: 'validator', methodName: isoValidator, options: {} });
+        }
         return this._addToChain({
             type: 'validator',
             methodName: this.engine.validateDate,
@@ -417,6 +434,39 @@ export class StringSchema extends BaseSchema {
         return this._addToChain({
             type: 'validator',
             methodName: this.engine.validateUUID,
+            options,
+        });
+    }
+
+    // --- FORMATTERS ---
+    formatDate(options = {}) {
+        return this._addToChain({ type: 'formatter', methodName: this.engine.formatDate, options });
+    }
+    formatCurrency(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: this.engine.formatCurrency,
+            options,
+        });
+    }
+    formatPostalCode(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: this.engine.formatPostalCode,
+            options,
+        });
+    }
+    formatMobileNumber(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: this.engine.formatMobileNumber,
+            options,
+        });
+    }
+    formatTaxId(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: this.engine.formatTaxId,
             options,
         });
     }

@@ -1,6 +1,6 @@
 {
     "name": "@formajs/mold",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Schema validation powered by FormaJS. Mold your data's shape via fluent API—orchestrate purely, reimplement nothing.",
     "type": "module",
     "main": "dist/index.cjs",
@@ -47,13 +47,13 @@
         "check": "npm run format && npm run lint"
     },
     "peerDependencies": {
-        "@formajs/formajs": "^1.1.1"
+        "@formajs/formajs": "^2.0.0"
     },
     "dependencies": {
-        "@formajs/formajs": "^1.1.1"
+        "@formajs/formajs": "^2.0.0"
     },
     "devDependencies": {
-        "@formajs/formajs": "^1.1.1",
+        "@formajs/formajs": "^2.0.0",
         "@eslint/js": "^9.38.0",
         "@rollup/plugin-commonjs": "^29.0.0",
         "@rollup/plugin-json": "^6.1.0",

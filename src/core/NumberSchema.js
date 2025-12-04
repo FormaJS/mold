@@ -200,4 +200,27 @@ export class NumberSchema extends BaseSchema {
             options: { max: maxValue },
         });
     }
+
+    // --- FORMATTERS ---
+    toPercentage(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: (value, opts) => this.engine.toPercentage(value, undefined, opts),
+            options,
+        });
+    }
+    toAccessible(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: (value, opts) => this.engine.toAccessible(value, undefined, opts),
+            options,
+        });
+    }
+    formatCurrency(options = {}) {
+        return this._addToChain({
+            type: 'formatter',
+            methodName: (value, opts) => this.engine.formatCurrency(value, opts),
+            options,
+        });
+    }
 }

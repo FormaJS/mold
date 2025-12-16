@@ -103,4 +103,14 @@ class FormaSchemaFactory {
 
 export const f = new FormaSchemaFactory();
 export const forma = f;
+
+/**
+ * @typedef {import('./core/BaseSchema.js').BaseSchema<any>} AnySchema
+ */
+
+/**
+ * @template {AnySchema} T
+ * @typedef {T['_outputType']} infer
+ */
+
 export default f;

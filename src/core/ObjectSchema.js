@@ -1,5 +1,9 @@
 import { BaseSchema } from './BaseSchema.js';
 
+/**
+ * @template {Record<string, BaseSchema<any>>} Shape
+ * @extends {BaseSchema<{ [K in keyof Shape]: Shape[K]['_outputType'] }>}
+ */
 export class ObjectSchema extends BaseSchema {
     constructor(engine, shape = {}, chain = []) {
         super(engine, chain);

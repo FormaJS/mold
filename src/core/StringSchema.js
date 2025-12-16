@@ -1,5 +1,8 @@
 import { BaseSchema } from './BaseSchema.js';
 
+/**
+ * @extends {BaseSchema<string>}
+ */
 export class StringSchema extends BaseSchema {
     constructor(engine, chain = []) {
         super(engine, chain);

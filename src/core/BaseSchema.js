@@ -12,7 +12,17 @@ function formatMessageLocal(template, context = {}) {
     });
 }
 
+/**
+ * @template OutputType
+ */
 export class BaseSchema {
+    /**
+     * Phantom property for type inference
+     * @protected
+     * @type {OutputType}
+     */
+    _outputType;
+
     constructor(engine, chain = []) {
         this.engine = engine;
         this.chain = chain;

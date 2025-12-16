@@ -1,5 +1,8 @@
 import { BaseSchema } from './BaseSchema.js';
 
+/**
+ * @extends {BaseSchema<number>}
+ */
 export class NumberSchema extends BaseSchema {
     constructor(engine, chain = []) {
         super(engine, chain);

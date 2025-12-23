@@ -1,6 +1,6 @@
 {
     "name": "@formajs/mold",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Schema validation powered by FormaJS. Mold your data's shape via fluent API—orchestrate purely, reimplement nothing.",
     "type": "module",
     "main": "dist/index.cjs",

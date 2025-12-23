@@ -6,9 +6,47 @@ import { BaseSchema } from './BaseSchema.js';
 export class StringSchema extends BaseSchema {
     constructor(engine, chain = []) {
         super(engine, chain);
+        // Default type validation
+        if (chain.length === 0) {
+            this.chain.push({
+                type: 'validator',
+                methodName: (value) => {
+                    if (typeof value !== 'string') {
+                        return {
+                            valid: false,
+                            error: 'type',
+                            message: 'Value must be a string',
+                        };
+                    }
+                    return { valid: true };
+                },
+                options: {},
+            });
+        }
     }
 
     // --- SANITIZERS ---
+
+    /**
+     * @returns {object}
+     */
+    toJSONSchema() {
+        /** @type {any} */
+        const schema = { type: 'string' };
+
+        for (const rule of this.chain) {
+            if (rule.type === 'validator') {
+                // naive mapping
+                if (rule.options.min) schema.minLength = rule.options.min;
+                if (rule.options.max) schema.maxLength = rule.options.max;
+                if (rule.error === 'validateEmail') schema.format = 'email';
+                if (rule.error === 'validateUrl') schema.format = 'uri';
+                if (rule.error === 'validateUuid') schema.format = 'uuid';
+            }
+        }
+        return schema;
+    }
+
     trim(options = {}) {
         return this._addToChain({ type: 'sanitizer', methodName: this.engine.trim, options });
     }
@@ -139,7 +177,10 @@ export class StringSchema extends BaseSchema {
                 const mo = Number(m[2]);
                 const d = Number(m[3]);
                 const date = new Date(Date.UTC(y, mo - 1, d));
-                const valid = date.getUTCFullYear() === y && (date.getUTCMonth() + 1) === mo && date.getUTCDate() === d;
+                const valid =
+                    date.getUTCFullYear() === y &&
+                    date.getUTCMonth() + 1 === mo &&
+                    date.getUTCDate() === d;
                 return { valid };
             };
             return this._addToChain({ type: 'validator', methodName: isoValidator, options: {} });
@@ -169,6 +210,7 @@ export class StringSchema extends BaseSchema {
             type: 'validator',
             methodName: this.engine.validateEmail,
             options,
+            error: 'validateEmail',
         });
     }
     validateEndsWith(options = {}) {
@@ -424,6 +466,7 @@ export class StringSchema extends BaseSchema {
             type: 'validator',
             methodName: this.engine.validateURL,
             options,
+            error: 'validateURL',
         });
     }
     validateUppercase(options = {}) {
@@ -438,7 +481,25 @@ export class StringSchema extends BaseSchema {
             type: 'validator',
             methodName: this.engine.validateUUID,
             options,
+            error: 'validateUUID',
         });
+    }
+
+    // Aliases for common validations
+    min(length) {
+        return this.validateLength({ min: length });
+    }
+    max(length) {
+        return this.validateLength({ max: length });
+    }
+    email(options) {
+        return this.validateEmail(options);
+    }
+    url(options) {
+        return this.validateURL(options);
+    }
+    uuid(options) {
+        return this.validateUUID(options);
     }
 
     // --- FORMATTERS ---

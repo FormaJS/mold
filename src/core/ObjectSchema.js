@@ -8,6 +8,7 @@ export class ObjectSchema extends BaseSchema {
     constructor(engine, shape = {}, chain = []) {
         super(engine, chain);
         this.shape = shape;
+        this._unknownMode = 'passthrough'; // 'strip', 'strict', 'passthrough'
     }
 
     /**
@@ -16,7 +17,9 @@ export class ObjectSchema extends BaseSchema {
     _addToChain(step) {
         const newChain = [...this.chain];
         newChain.push(step);
-        return new ObjectSchema(this.engine, this.shape, newChain);
+        const schema = new ObjectSchema(this.engine, this.shape, newChain);
+        schema._unknownMode = this._unknownMode;
+        return schema;
     }
 
     /**
@@ -25,14 +28,119 @@ export class ObjectSchema extends BaseSchema {
      * @returns {ObjectSchema}
      */
     shape(shape) {
-        return new ObjectSchema(this.engine, shape, this.chain);
+        const schema = new ObjectSchema(this.engine, shape, this.chain);
+        schema._unknownMode = this._unknownMode;
+        return schema;
+    }
+
+    /**
+     * Remove chaves desconhecidas.
+     */
+    strip() {
+        const schema = this._addToChain({ type: 'meta', name: 'strip' });
+        schema._unknownMode = 'strip';
+        return schema;
+    }
+
+    /**
+     * Erro em chaves desconhecidas.
+     */
+    strict() {
+        const schema = this._addToChain({ type: 'meta', name: 'strict' });
+        schema._unknownMode = 'strict';
+        return schema;
+    }
+
+    /**
+     * Mantém chaves desconhecidas (default).
+     */
+    passthrough() {
+        const schema = this._addToChain({ type: 'meta', name: 'passthrough' });
+        schema._unknownMode = 'passthrough';
+        return schema;
+    }
+
+    /**
+     * Pick select keys.
+     * @param {string[]} keys
+     * @returns {ObjectSchema}
+     */
+    pick(keys) {
+        const newShape = {};
+        for (const key of keys) {
+            if (Object.prototype.hasOwnProperty.call(this.shape, key)) {
+                newShape[key] = this.shape[key];
+            }
+        }
+        const schema = new ObjectSchema(this.engine, newShape);
+        schema._unknownMode = this._unknownMode;
+        return schema;
+    }
+
+    /**
+     * Omit select keys.
+     * @param {string[]} keys
+     * @returns {ObjectSchema}
+     */
+    omit(keys) {
+        const newShape = { ...this.shape };
+        for (const key of keys) {
+            delete newShape[key];
+        }
+        const schema = new ObjectSchema(this.engine, newShape);
+        schema._unknownMode = this._unknownMode;
+        return schema;
+    }
+
+    /**
+     * Marks all fields in the shape as optional.
+     * @returns {ObjectSchema}
+     */
+    partial() {
+        const newShape = {};
+        for (const [key, schema] of Object.entries(this.shape)) {
+            newShape[key] = schema.optional();
+        }
+        const newSchema = new ObjectSchema(this.engine, newShape);
+        newSchema._unknownMode = this._unknownMode;
+        return newSchema;
+    }
+
+    /**
+     * Marks all fields in the shape as required.
+     * @returns {ObjectSchema}
+     */
+    required() {
+        const newShape = {};
+        for (const [key, schema] of Object.entries(this.shape)) {
+            newShape[key] = schema.required();
+        }
+        const newSchema = new ObjectSchema(this.engine, newShape);
+        newSchema._unknownMode = this._unknownMode;
+        return newSchema;
+    }
+
+    /**
+     * Extends the schema with a new shape.
+     * @param {object} shape
+     * @returns {ObjectSchema}
+     */
+    extend(shape) {
+        const newShape = { ...this.shape, ...shape };
+        const newSchema = new ObjectSchema(this.engine, newShape);
+        newSchema._unknownMode = this._unknownMode;
+        return newSchema;
     }
 
     /**
      * Executa os pipelines de validação para o objeto.
      */
     async validate(value) {
-        if (typeof value !== 'object' || value === null) {
+        if (this._isOptional && value === undefined) {
+            return { valid: true, value: undefined };
+        }
+
+        if (typeof value !== 'object' || value === null || Array.isArray(value)) {
             const result = { valid: false, error: 'invalidType' };
             return {
                 valid: false,
@@ -65,8 +173,36 @@ export class ObjectSchema extends BaseSchema {
                 }
                 currentValue[key] = fieldResult.value;
             } else {
-                const result = { valid: false, error: 'required' };
-                errors[key] = [this._formatError(result)];
+                // @ts-ignore
+                if (!schema._isOptional) {
+                    const result = {
+                        valid: false,
+                        error: 'required',
+                        message: 'Field is required',
+                        context: { key }
+                    };
+                    errors[key] = [this._formatError(result)];
+                }
+            }
+        }
+
+        // Tratamento de chaves desconhecidas
+        if (this._unknownMode !== 'passthrough') {
+            for (const key of Object.keys(currentValue)) {
+                if (!Object.prototype.hasOwnProperty.call(this.shape, key)) {
+                    if (this._unknownMode === 'strict') {
+                        const result = {
+                            valid: false,
+                            error: 'invalidKey',
+                            message: `Unknown key: ${key}`,
+                            context: { key }
+                        };
+                        if (!errors[key]) errors[key] = [];
+                        errors[key].push(this._formatError(result));
+                    } else if (this._unknownMode === 'strip') {
+                        delete currentValue[key];
+                    }
+                }
             }
         }
 
@@ -87,10 +223,7 @@ export class ObjectSchema extends BaseSchema {
             const node = errors[key];
             const isArray = Array.isArray(node);
             const hasItems = isArray && Object.prototype.hasOwnProperty.call(node, 'items');
-            if (
-                node == null ||
-                (isArray && !hasItems && node.every((e) => e == null))
-            ) {
+            if (node == null || (isArray && !hasItems && node.every((e) => e == null))) {
                 delete errors[key];
             }
         });
@@ -100,5 +233,27 @@ export class ObjectSchema extends BaseSchema {
             errors: Object.keys(errors).length > 0 ? errors : null,
             value: currentValue,
         };
+    }
+    /**
+     * @returns {object}
+     */
+    toJSONSchema() {
+        /** @type {any} */
+        const schema = {
+            type: 'object',
+            properties: {},
+            required: [],
+            additionalProperties: this._unknownMode === 'strict' ? false : true,
+        };
+
+        for (const [key, sub] of Object.entries(this.shape)) {
+            schema.properties[key] = sub.toJSONSchema();
+            // @ts-ignore - _isOptional is protected
+            if (!sub._isOptional) {
+                schema.required.push(key);
+            }
+        }
+
+        return schema;
     }
 }

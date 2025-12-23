@@ -39,11 +39,7 @@ describe('Forma Factory', () => {
     });
 
     it('factory permite encadeamento de métodos', () => {
-        const schema = forma
-            .string()
-            .trim()
-            .validateNotEmpty()
-            .validateEmail();
+        const schema = forma.string().trim().validateNotEmpty().validateEmail();
         expect(schema).toBeDefined();
     });
 
@@ -62,7 +58,7 @@ describe('Forma Factory', () => {
         const schema = forma.object({
             name: forma.string(),
             age: forma.number(),
-            hobbies: forma.array(forma.string())
+            hobbies: forma.array(forma.string()),
         });
         expect(schema).toBeDefined();
     });
@@ -71,7 +67,7 @@ describe('Forma Factory', () => {
         const schema = forma.array(
             forma.object({
                 id: forma.number(),
-                name: forma.string()
+                name: forma.string(),
             })
         );
         expect(schema).toBeDefined();

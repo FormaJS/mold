@@ -40,7 +40,7 @@ describe('ArraySchema - Casos de Borda', () => {
             'valid@email.com',
             'invalid1',
             'invalid2',
-            'another@valid.com'
+            'another@valid.com',
         ]);
         expect(result.valid).toBe(false);
         expect(result.errors).toBeDefined();
@@ -50,13 +50,13 @@ describe('ArraySchema - Casos de Borda', () => {
         const schema = forma.array(
             forma.object({
                 id: forma.number().min(1),
-                name: forma.string().validateNotEmpty()
+                name: forma.string().validateNotEmpty(),
             })
         );
         const result = await schema.validate([
             { id: 1, name: 'John' },
             { id: 0, name: '' },
-            { id: 2, name: 'Jane' }
+            { id: 2, name: 'Jane' },
         ]);
         expect(result.valid).toBe(false);
         expect(result.errors).toBeDefined();
@@ -64,15 +64,19 @@ describe('ArraySchema - Casos de Borda', () => {
 
     it('valida array aninhado', async () => {
         const schema = forma.array(forma.array(forma.string()));
-        const result = await schema.validate([['a', 'b'], ['c', 'd']]);
+        const result = await schema.validate([
+            ['a', 'b'],
+            ['c', 'd'],
+        ]);
         expect(result.valid).toBe(true);
     });
 
     it('valida array aninhado com erro', async () => {
-        const schema = forma.array(
-            forma.array(forma.number().min(0))
-        );
-        const result = await schema.validate([[1, 2], [3, -1]]);
+        const schema = forma.array(forma.array(forma.number().min(0)));
+        const result = await schema.validate([
+            [1, 2],
+            [3, -1],
+        ]);
         expect(result.valid).toBe(false);
     });
 

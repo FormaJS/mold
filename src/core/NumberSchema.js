@@ -6,30 +6,45 @@ import { BaseSchema } from './BaseSchema.js';
 export class NumberSchema extends BaseSchema {
     constructor(engine, chain = []) {
         super(engine, chain);
+        // Default type validation
+        if (chain.length === 0) {
+            this.chain.push({
+                type: 'validator',
+                methodName: (value) => {
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        return {
+                            valid: false,
+                            error: 'type',
+                            message: 'Value must be a number',
+                        };
+                    }
+                    return { valid: true };
+                },
+                options: {},
+            });
+        }
     }
 
-    /**
-     * Valida que o valor é um número antes de aplicar o pipeline.
-     */
-    async validate(value) {
-        // Rejeita imediatamente se não for number
-        if (typeof value !== 'number' || Number.isNaN(value)) {
-            const result = {
-                valid: false,
-                error: 'validateNumeric',
-                message: 'Value must be a number',
-            };
-            return {
-                valid: false,
-                errors: [this._formatError(result)],
-                value: value,
-            };
-        }
-        // Chama o pipeline padrão do BaseSchema
-        return await super.validate(value);
-    }
+    // validate method removed to allow BaseSchema to orchestrate sanitizers first
 
     // --- VALIDATORS inline (Forma não tem validadores para tipo number nativo) ---
+    /**
+     * @returns {object}
+     */
+    toJSONSchema() {
+        /** @type {any} */
+        const schema = { type: 'number' };
+
+        for (const rule of this.chain) {
+            if (rule.type === 'validator') {
+                if (rule.options.min !== undefined) schema.minimum = rule.options.min;
+                if (rule.options.max !== undefined) schema.maximum = rule.options.max;
+                if (rule.error === 'validateInt') schema.type = 'integer';
+            }
+        }
+        return schema;
+    }
+
     validateInt(options = {}) {
         return this._addToChain({
             type: 'validator',
@@ -38,7 +53,9 @@ export class NumberSchema extends BaseSchema {
                 error: 'validateInt',
                 message: 'Value must be an integer',
             }),
+
             options,
+            error: 'validateInt',
         });
     }
 
@@ -90,6 +107,10 @@ export class NumberSchema extends BaseSchema {
             }),
             options,
         });
+    }
+
+    int(options = {}) {
+        return this.validateInt(options);
     }
 
     validateDecimal(options = {}) {

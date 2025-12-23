@@ -20,7 +20,17 @@ export class ArraySchema extends BaseSchema {
     minLength(minValue) {
         return this._addToChain({
             type: 'validator',
-            methodName: this.engine.validateLength,
+            methodName: (value) => {
+                if (value.length < minValue) {
+                    return {
+                        valid: false,
+                        error: 'validateLengthMin',
+                        message: `Array must have at least ${minValue} items`,
+                        context: { min: minValue, actual: value.length }
+                    };
+                }
+                return { valid: true };
+            },
             options: { min: minValue },
         });
     }
@@ -28,9 +38,35 @@ export class ArraySchema extends BaseSchema {
     maxLength(maxValue) {
         return this._addToChain({
             type: 'validator',
-            methodName: this.engine.validateLength,
+            methodName: (value) => {
+                if (value.length > maxValue) {
+                    return {
+                        valid: false,
+                        error: 'validateLengthMax',
+                        message: `Array must have at most ${maxValue} items`,
+                        context: { max: maxValue, actual: value.length }
+                    };
+                }
+                return { valid: true };
+            },
             options: { max: maxValue },
         });
+    }
+
+    /**
+     * Alias for minLength.
+     * @param {number} length
+     */
+    min(length) {
+        return this.minLength(length);
+    }
+
+    /**
+     * Alias for maxLength.
+     * @param {number} length
+     */
+    max(length) {
+        return this.maxLength(length);
     }
 
     validateNotEmpty(options = {}) {
@@ -98,6 +134,15 @@ export class ArraySchema extends BaseSchema {
             valid: !hasErrors,
             errors: hasErrors ? (items ? Object.assign([...errors], { items }) : errors) : null,
             value: currentValue,
+        };
+    }
+    /**
+     * @returns {object}
+     */
+    toJSONSchema() {
+        return {
+            type: 'array',
+            items: this.itemSchema.toJSONSchema(),
         };
     }
 }

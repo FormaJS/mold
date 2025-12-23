@@ -36,6 +36,21 @@ describe('JSON Schema Generation', () => {
                 age: { type: 'number' },
             },
             required: ['name', 'age'],
+            additionalProperties: true,
+        });
+    });
+
+    it('should generate strict object schema', () => {
+        const schema = f.object({
+            name: f.string(),
+        }).strict();
+        const json = schema.toJSONSchema();
+        expect(json).toEqual({
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+            },
+            required: ['name'],
             additionalProperties: false,
         });
     });

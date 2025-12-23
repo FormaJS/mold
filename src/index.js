@@ -14,7 +14,6 @@ import { BooleanSchema } from './core/BooleanSchema.js';
 import { DateSchema } from './core/DateSchema.js';
 import { RecordSchema } from './core/RecordSchema.js';
 import { MapSchema } from './core/MapSchema.js';
-import { MapSchema } from './core/MapSchema.js';
 import { SetSchema } from './core/SetSchema.js';
 import { PromiseSchema } from './core/PromiseSchema.js';
 import { FunctionSchema } from './core/FunctionSchema.js';
@@ -25,9 +24,14 @@ const Forma = formaInstance.constructor;
 
 class FormaSchemaFactory {
     constructor(locale = 'en-US') {
-        this.engine = new Forma(locale);
+        /** @type {any} */
+        const FormaClass = Forma;
+        this.engine = new FormaClass(locale);
     }
 
+    /**
+     * @param {string} locale
+     */
     setLocale(locale) {
         try {
             this.engine.setLocale(locale);
@@ -52,6 +56,9 @@ class FormaSchemaFactory {
         }
     }
 
+    /**
+     * @param {string} locale
+     */
     async ensureLocale(locale) {
         const modulePath = `@formajs/formajs/i18n/${locale}`;
         try {
@@ -61,6 +68,9 @@ class FormaSchemaFactory {
         }
     }
 
+    /**
+     * @param {string} locale
+     */
     async setLocaleAsync(locale) {
         await this.ensureLocale(locale);
         this.engine.setLocale(locale);
@@ -159,10 +169,11 @@ class FormaSchemaFactory {
 
     /**
      * Start an object validation chain.
-     * @param {object} shape - The object shape.
-     * @returns {ObjectSchema}
+     * @template [Shape=any]
+     * @param {Shape} shape - The object shape.
+     * @returns {ObjectSchema<Shape>}
      */
-    object(shape = {}) {
+    object(shape = /** @type {any} */ ({})) {
         return new ObjectSchema(this.engine, shape);
     }
 
@@ -212,8 +223,10 @@ class FormaSchemaFactory {
      */
     and(...schemas) {
         if (schemas.length === 1 && Array.isArray(schemas[0])) {
+            // @ts-ignore
             schemas = schemas[0];
         }
+        // @ts-ignore
         return new IntersectionSchema(this.engine, schemas);
     }
 
@@ -223,6 +236,7 @@ class FormaSchemaFactory {
      * @returns {TupleSchema<T>}
      */
     tuple(schemas) {
+        // @ts-ignore
         return new TupleSchema(this.engine, schemas);
     }
 
